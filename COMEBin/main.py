@@ -246,6 +246,8 @@ def arguments():
 
     get_result_subparsers.add_argument('--bac_mg_table', type=str, help=("bac_mg_table (bacteria marker gene information)"))
     get_result_subparsers.add_argument('--ar_mg_table', type=str, help=("ar_mg_table (archea marker gene information)"))
+    get_result_subparsers.add_argument('--checkm_database', type=str, default=None,
+                                       help=("The database to use for marker genes. Default is 'default'."))
 
     args = parser.parse_args()
     return args
@@ -294,7 +296,7 @@ def main():
         from utils import gen_seed
 
         num_threads = args.num_threads
-        _ = gen_seed(logger, args.contig_file, num_threads, args.contig_len, marker_name="bacar_marker", quarter="2quarter")
+        _ = gen_seed(logger, args.contig_file, num_threads, args.contig_len, marker_name="pltd_marker", quarter="2quarter")
 
         cluster(logger, args)
 
@@ -360,7 +362,7 @@ def main():
         from get_final_result import run_get_final_result
 
         num_threads = args.num_threads
-        seed_num = gen_seed(logger, args.contig_file, num_threads, args.contig_len, marker_name="bacar_marker", quarter="2quarter")
+        seed_num = gen_seed(logger, args.contig_file, num_threads, args.contig_len, marker_name="pltd_marker", quarter="2quarter")
 
         run_get_final_result(logger, args, seed_num, num_threads, ignore_kmeans_res=True)
 

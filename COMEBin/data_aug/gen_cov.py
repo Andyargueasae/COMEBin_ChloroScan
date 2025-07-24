@@ -194,8 +194,26 @@ def calculate_coverage(depth_file: str, logger, edge: int = 0,
 
     return (depth_file, logger)
 
+def modify_depth_file(depth_file: str, contig_ids: list):
+    """
+    Modify the depth file to only include specified contig IDs.
 
-def gen_cov_from_bedout(logger, out_path: str, depth_file_path: str,
+    :param depth_file: Path to the position depth file (str).
+    :param contig_ids: List of contig IDs to retain in the depth file (list).
+
+    :return: None
+    """
+    with open(depth_file, 'r') as infile, atomic_write(depth_file, overwrite=True) as outfile:
+        for line in infile:
+            if line.startswith('#'):
+                outfile.write(line)
+                continue
+            contig_id = line.split('\t')[0]
+            if contig_id in contig_ids:
+                outfile.write(line)
+
+
+def gen_cov_from_bedout(logger, out_path: str, depth_file_path: str, contig_ids: list=None,
                         num_process: int = 10, num_aug: int = 5, edge: int = 0, contig_len: int = 1000):
     """
     Generate coverage data from bedtools output for original and augmented sequences.
@@ -254,6 +272,8 @@ def gen_cov_from_bedout(logger, out_path: str, depth_file_path: str,
         ####generate coverage files
         for nameid in range(len(namelist)):
             depth_file = depth_file_path + namelist[nameid]
+            # add a step to prefilter depth file per sample and save to the original depth_file.
+            modify_depth_file(depth_file, contig_ids)
             pool.apply_async(
                 calculate_coverage_samplebyindex,
                 args=(depth_file, 'aug' + str(i + 1), aug_seq_info_dict, logger, edge, contig_len),
@@ -286,6 +306,20 @@ def read_aug_seq_info(aug_seq_info_out_file):
 
     return aug_seq_info_dict
 
+def get_plastid_ids(contig_file):
+    """
+    Get the list of plastid contig IDs from the contig file.
+
+    :param contig_file: Path to the contig file (str).
+
+    :return: List of plastid contig IDs (list).
+    """
+    plastid_contigs = []
+    with open(contig_file, 'r') as f:
+        for line in f:
+            if line.startswith('>'):
+                plastid_contigs.append(line.strip().split()[0][1:])  # Remove '>' and take the ID
+    return plastid_contigs
 
 def run_gen_cov(logger, args):
     logger.info("Generate coverage files from bam files.")
@@ -299,4 +333,5 @@ def run_gen_cov(logger, args):
 
     out = args.out_augdata_path + 'depth/'
     run_gen_bedtools_out(bam_file_path, out, logger,num_process=args.num_threads)
-    gen_cov_from_bedout(logger, args.out_augdata_path, out, num_aug=args.n_views-1, contig_len=args.contig_len,num_process=args.num_threads)
+    plastid_contig_ids = get_plastid_ids(args.contig_file) 
+    gen_cov_from_bedout(logger, args.out_augdata_path, out, num_aug=args.n_views-1, contig_len=args.contig_len, contig_ids=plastid_contig_ids, num_process=args.num_threads)

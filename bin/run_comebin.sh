@@ -22,13 +22,15 @@ help_message () {
 	echo "  -e INT          embedding size for comebin network (default=2048)"
 	echo "  -c INT          embedding size for coverage network (default=2048)"
 	echo "  -b INT          batch size for training process (default=1024)"
+  echo "  -d STR          path to the CheckM database (default=/home/yuhtong/scratch/andy/COMEBin_ChloroScan/checkm_database)"
 	echo "";}
 
 run_file_path=$(dirname $(which run_comebin.sh))
 
 if [[ $? -ne 0 ]]; then
-	echo "cannot find run_comebin.sh file - something went wrong with the installation!"
-	exit 1
+	echo "cannot find run_comebin.sh file - using developing mode directory instead."
+  run_file_path=/home/yuhtong/scratch/andy/COMEBin_ChloroScan
+	# exit 1
 fi
 
 
@@ -43,7 +45,7 @@ emb_szs_forcov=2048
 emb_szs=2048
 batch_size=1024
 
-while getopts a:o:p:n:t:l:e:c:b: OPT; do
+while getopts a:o:p:n:t:l:e:c:b:d: OPT; do
  case ${OPT} in
   a) contig_file=$(realpath ${OPTARG})
     ;;
@@ -62,6 +64,8 @@ while getopts a:o:p:n:t:l:e:c:b: OPT; do
   c) emb_szs_forcov=${OPTARG}
     ;;
   b) batch_size=${OPTARG}
+    ;;
+  d) checkm_database=${OPTARG}
     ;;
   \?)
 #    printf "[Usage] `date '+%F %T'` -i <INPUT_FILE> -o <OUTPUT_DIR> -o <P
@@ -138,6 +142,9 @@ else
     --n_views ${n_views} --bam_file_path ${bam_file_path} --num_threads ${num_threads}
 fi
 
+# pre-terminate here to check data augmentation. 
+exit 0
+
 if [[ $? -ne 0 ]] ; then echo "Something went wrong with running generating augmentation data. Exiting.";exit 1; fi
 
 ########################################################################################################
@@ -186,7 +193,8 @@ python main.py bin --contig_file ${contig_file} \
 
 python main.py get_result --contig_file ${contig_file} \
 --output_path ${output_dir}/comebin_res \
---seed_file ${seed_file} --num_threads ${num_threads}
+--seed_file ${seed_file} --num_threads ${num_threads} \
+--checkm_database ${checkm_database}
 
 if [[ $? -ne 0 ]] ; then echo "Something went wrong with running clustering. Exiting.";exit 1; fi
 

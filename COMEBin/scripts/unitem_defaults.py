@@ -9,9 +9,13 @@ file_dir = os.path.dirname(os.path.realpath(__file__))
 
 CHECKM_BAC_MS = os.path.join(file_dir, 'checkm_ms', 'bacteria.ms')
 CHECKM_AR_MS = os.path.join(file_dir, 'checkm_ms', 'archaea.ms')
+# Add default line for plastid marker set and directory.
+CHECKM_PLTD_MS = os.path.join(file_dir, 'checkm_ms', 'plastid.ms')
 
 CHECKM_BAC_DIR = 'checkm_bac'
 CHECKM_AR_DIR = 'checkm_ar'
+CHECKM_PLTD_DIR = 'checkm_pltd'
+
 BINNING_METHOD_DIR = 'binning_methods'
 
 MARKER_GENE_TABLE = 'marker_gene_table.tsv'

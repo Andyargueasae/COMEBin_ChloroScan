@@ -1,0 +1,22 @@
+package:
+  name: Comebin_plastid
+  version: "0.1"
+
+source:
+  path: ../  # Use local path or GitHub URL/tarball
+
+build:
+  noarch: python
+  script: python setup.py install  # or pip install .
+
+requirements:
+  host:
+    - python
+    - pip
+  run:
+    - python
+
+about:
+  home: https://github.com/yourname/my_package
+  summary: "A short description of my package"
+  license: MIT

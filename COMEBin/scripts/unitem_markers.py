@@ -15,6 +15,7 @@ from scripts.unitem_defaults import *
 """
 CHECKM_BAC_MS = 'bacteria.ms'
 CHECKM_AR_MS = 'archaea.ms'
+CHECKM_PLTD_MS = 'plastid.ms'
 """
 
 
@@ -27,14 +28,16 @@ class Markers():
         self.logger = logging.getLogger('timestamp')
 
         parser = MarkerSetParser()
-        bin_marker_sets = parser.parseTaxonomicMarkerSetFile(CHECKM_BAC_MS)
-        self.bac_ms = bin_marker_sets.mostSpecificMarkerSet()
+        bin_marker_sets = parser.parseTaxonomicMarkerSetFile(CHECKM_PLTD_MS)
+        # self.bac_ms = bin_marker_sets.mostSpecificMarkerSet()
+        self.pltd_ms = bin_marker_sets.mostSpecificMarkerSet()
 
-        bin_marker_sets = parser.parseTaxonomicMarkerSetFile(CHECKM_AR_MS)
-        self.ar_ms = bin_marker_sets.mostSpecificMarkerSet()
+        # bin_marker_sets = parser.parseTaxonomicMarkerSetFile(CHECKM_AR_MS)
+        # self.ar_ms = bin_marker_sets.mostSpecificMarkerSet()
 
-        self.bac_markers_on_contigs = None
-        self.ar_markers_on_contigs = None
+        # self.bac_markers_on_contigs = None
+        self.pltd_markers_on_contigs = None
+        # self.ar_markers_on_contigs = None
 
     # update for metabinner
     def read_table(self, marker_gene_table):
@@ -68,6 +71,12 @@ class Markers():
                     markers[marker_id].append(scaffold_id)
 
         return markers
+    
+    def evaluate_pltd(self, gene_table, individual_markers=False):
+        """Evaluate completeness and contamination of genome using plastid marker sets."""
+
+        comp, cont = self.pltd_ms.genomeCheck(gene_table, individual_markers)
+        return comp, cont
 
     def evaluate_bac(self, gene_table, individual_markers=False):
         """Evaluate completeness and contamination of genome using bacterial marker sets."""
@@ -81,36 +90,39 @@ class Markers():
         comp, cont = self.ar_ms.genomeCheck(gene_table, individual_markers)
         return comp, cont
 
-    def evaluate(self, bac_gene_table, ar_gene_table):
+    def evaluate(self, pltd_gene_table):
         """Evaluate completeness and contamination of genome using best domain-level marker sets."""
 
-        bac_comp, bac_cont = self.evaluate_bac(bac_gene_table, True)
-        ar_comp, ar_cont = self.evaluate_ar(ar_gene_table, True)
+        # bac_comp, bac_cont = self.evaluate_bac(bac_gene_table, True)
+        # ar_comp, ar_cont = self.evaluate_ar(ar_gene_table, True)
+        pltd_comp, pltd_cont = self.evaluate_pltd(pltd_gene_table, True)
 
-        if bac_comp + bac_cont > ar_comp + ar_cont:
-            # select domain set with the larget number of identified markers
-            # including those present multiple times
-            bac_comp, bac_cont = self.evaluate_bac(bac_gene_table, False)
-            return 'Bacteria', bac_comp, bac_cont
+        # if bac_comp + bac_cont > ar_comp + ar_cont:
+        #     # select domain set with the larget number of identified markers
+        #     # including those present multiple times
+        #     bac_comp, bac_cont = self.evaluate_bac(bac_gene_table, False)
+        #     return 'Bacteria', bac_comp, bac_cont
 
-        ar_comp, ar_cont = self.evaluate_ar(ar_gene_table, False)
-        return 'Archaea', ar_comp, ar_cont
+        # ar_comp, ar_cont = self.evaluate_ar(ar_gene_table, False)
+        return 'Algae', pltd_comp, pltd_cont
 
     def bin_quality(self, bin):
         """Estimate quality of bin."""
 
         # create gene tables for bin
-        bac_gene_table = defaultdict(list)
-        ar_gene_table = defaultdict(list)
+        # bac_gene_table = defaultdict(list)
+        # ar_gene_table = defaultdict(list)
+        pltd_gene_table = defaultdict(list)
         for cid in bin:
-            for marker_id in self.bac_markers_on_contigs[cid]:
-                bac_gene_table[marker_id].append(cid)
+            # for marker_id in self.bac_markers_on_contigs[cid]:
+            #     bac_gene_table[marker_id].append(cid)
 
-            for marker_id in self.ar_markers_on_contigs[cid]:
-                ar_gene_table[marker_id].append(cid)
+            # for marker_id in self.ar_markers_on_contigs[cid]:
+            #     ar_gene_table[marker_id].append(cid)
+            for marker_id in self.pltd_markers_on_contigs[cid]:
+                pltd_gene_table[marker_id].append(cid)
 
-        domain, comp, cont = self.evaluate(bac_gene_table,
-                                           ar_gene_table)
+        domain, comp, cont = self.evaluate(pltd_gene_table)
 
         return domain, comp, cont
 
@@ -134,6 +146,39 @@ class Markers():
         self._markers_on_contigs(gene_tables)
 
         return gene_tables
+    
+    def marker_gene_tables_pltd(self, pltd_mg_table):
+        """Get marker genes for bins across all binning methods for plastid."""
+
+        markers = Markers()
+        # binning_methods_dir = os.path.join(profile_dir, BINNING_METHOD_DIR)
+
+        # pltd_mg_table = os.path.join(binning_methods_dir, bm, CHECKM_PLTD_DIR, MARKER_GENE_TABLE)
+        pltd_gene_tables = markers.read_table(pltd_mg_table)
+
+        gene_table = pltd_gene_tables
+
+        self._markers_on_plastid_contigs(gene_table)
+
+        return gene_table
+    
+    def _markers_on_plastid_contigs(self, gene_table):
+        """Get markers on each contig."""
+
+        self.bac_markers_on_contigs = defaultdict(list)
+        self.ar_markers_on_contigs = defaultdict(list)
+        processed_contigs = set()
+        pltd_gene_table = gene_table
+        scaffolds_in_binning_method = set()
+        for marker_id, scaffold_ids in pltd_gene_table.items():
+            for scaffold_id in scaffold_ids:
+                if scaffold_id in processed_contigs:
+                    continue
+                self.pltd_markers_on_contigs[scaffold_id].append(marker_id)
+            scaffolds_in_binning_method.update(scaffold_ids)
+
+        processed_contigs.update(scaffolds_in_binning_method)
+        # self.logger.info('Markers on %d contigs.' % len(processed_contigs))
 
     # update for metabinner
     def _markers_on_contigs(self, gene_tables):
@@ -173,3 +218,13 @@ class Markers():
                 ar_table[mid].append(cid)
 
         return bac_table, ar_table
+    
+    def create_pltd_gene_tables(self, contig_ids):
+        """Create gene tables for plastid markers for a set of contigs."""
+
+        pltd_table = defaultdict(list)
+        for cid in contig_ids:
+            for mid in self.pltd_markers_on_contigs[cid]:
+                pltd_table[mid].append(cid)
+
+        return pltd_table

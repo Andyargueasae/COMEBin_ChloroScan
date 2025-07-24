@@ -1,12 +1,12 @@
-from scripts.unitem_profile import Profile, make_sure_path_exists
+from scripts.unitem_profile import Profile, make_sure_path_exists # look at these modules.
 import copy
 import os
 
 from collections import defaultdict
 import pandas as pd
 
-from scripts.unitem_common import read_bins
-from scripts.unitem_markers import Markers
+from scripts.unitem_common import read_bins # the read_bins is not used here.
+from scripts.unitem_markers import Markers # finished updating to plastid.
 from filter_small_bins import filter_small_bins
 
 from typing import List, Optional, Union, Dict
@@ -220,7 +220,8 @@ def run_get_final_result(logger, args, seed_num: int, num_threads: int = 40,
         if not (os.path.exists(output_dir)):
             make_sure_path_exists(output_dir)
             profile = Profile(num_threads)
-            profile.run(bin_dirs,
+            profile.Profile_setup(args.checkm_database)
+            profile.run_pltd(bin_dirs,
                         output_dir)
 
         bac_mg_table = output_dir + '/binning_methods/' + res_name + '/checkm_bac/marker_gene_table.tsv'

@@ -61,7 +61,7 @@ def parse_bin_stats(profile_dir):
     binning_methods_dir = os.path.join(profile_dir, BINNING_METHOD_DIR)
     bin_stats = {}
     for bm in os.listdir(binning_methods_dir):
-        checkm_dir = os.path.join(binning_methods_dir, bm, CHECKM_BAC_DIR)
+        checkm_dir = os.path.join(binning_methods_dir, bm, CHECKM_PLTD_DIR)
 
         bin_stats[bm] = parse_checkm_bin_stats(checkm_dir)
 

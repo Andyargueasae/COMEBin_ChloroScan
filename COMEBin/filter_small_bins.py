@@ -69,7 +69,7 @@ def gen_bins(fastafile: str, resultfile: str, outputdir: str) -> None:
                 bin_name += 1
 
 
-def filter_small_bins(logger, fastafile: str, resultfile: str, args, minbinsize: int = 200000) -> None:
+def filter_small_bins(logger, fastafile: str, resultfile: str, args, minbinsize: int = 30000) -> None:
     """
     Filter small bins from the result file.
 

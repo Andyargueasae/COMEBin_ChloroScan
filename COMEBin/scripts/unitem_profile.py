@@ -154,6 +154,23 @@ class Profile():
 
         fout.close()
 
+    def Profile_setup(self, database):
+        """Set up CheckM database using checkm data.
+        Parameters
+        ----------
+        database : str
+            Path to CheckM-format database to use as reference.
+        """
+        if not os.path.exists(database):
+            self.logger.error('CheckM database %s does not exist.' % database)
+            sys.exit()
+        
+        cmd = 'checkm data setRoot %s' % database
+        self.logger.info('Setting up specified plastid CheckM database with command: %s' % cmd)
+        os.system(cmd)
+
+        return
+
     def run(self, bin_dirs, output_dir):
         """Profile genomes in each bin directory.
 
@@ -212,6 +229,63 @@ class Profile():
                 sys.exit()
 
             genome_quality[method_id] = self._genome_quality(bac_quality_table, ar_quality_table)
+
+        self._report_genome_quality(genome_quality, output_dir)
+
+    def run_pltd(self, bin_dirs, output_dir):
+        """Profile genomes in each bin directory.
+
+        Parameters
+        ----------
+        bin_dirs : list of str
+            Directories containing bins from different binning methods.
+        output_dir : str
+            Output directory.
+        """
+
+        self.logger.info('Profiling genomes in %d directories.' % len(bin_dirs))
+
+        num_processed = 0
+        genome_quality = defaultdict(lambda: dict)
+        for method_id, (bin_dir, bin_ext) in bin_dirs.items():
+            num_processed += 1
+            self.logger.info('Profiling %s (%d of %d).' % (method_id, num_processed, len(bin_dirs)))
+
+            for d, ms_file in [(CHECKM_PLTD_DIR, CHECKM_PLTD_MS)]:
+                cur_output_dir = os.path.join(output_dir, BINNING_METHOD_DIR, method_id, d)
+                cmd = 'checkm analyze -t %d -x %s %s %s %s' % (self.cpus,
+                                                               bin_ext,
+                                                               ms_file,
+                                                               bin_dir,
+                                                               cur_output_dir)
+                os.system(cmd)
+
+                marker_gene_table = os.path.join(cur_output_dir, MARKER_GENE_TABLE)
+                cmd = 'checkm qa -t %d -o 5 --tab_table -f %s %s %s' % (self.cpus,
+                                                                        marker_gene_table,
+                                                                        ms_file,
+                                                                        cur_output_dir)
+                os.system(cmd)
+
+                genome_quality_table = os.path.join(cur_output_dir, GENOME_QUALITY_TABLE)
+                cmd = 'checkm qa -t %d -o 2 --tab_table -f %s %s %s' % (self.cpus,
+                                                                        genome_quality_table,
+                                                                        ms_file,
+                                                                        cur_output_dir)
+                os.system(cmd)
+
+            pltd_quality_table = os.path.join(output_dir,
+                                             BINNING_METHOD_DIR,
+                                             method_id,
+                                             CHECKM_PLTD_DIR,
+                                             GENOME_QUALITY_TABLE)
+
+            if not os.path.exists(pltd_quality_table):
+                self.logger.error('Missing quality table for %s.' % method_id)
+                self.logger.error('Please verify there were bins in the bin directory specified for this method.')
+                sys.exit()
+
+            genome_quality[method_id] = self._genome_quality(pltd_quality_table)
 
         self._report_genome_quality(genome_quality, output_dir)
 
