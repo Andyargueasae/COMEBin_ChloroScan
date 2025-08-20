@@ -195,6 +195,49 @@ def estimate_bins_quality_nobins(bac_mg_table, ar_mg_table, res_path, ignore_kme
     write_estimated_bin_quality(bin_quality_dict, output_file)
     return best_method
 
+def estimate_bins_quality_nobins_pltd(pltd_mg_table, res_path, ignore_kmeans_res = False):
+    """
+    Estimate the quality of bins based on plastid marker gene information.
+
+    :param pltd_mg_table: The path to the plastid marker gene table.
+    :param res_path: The path to the result files.
+    :param ignore_kmeans_res: Whether to ignore K-means results (default: False).
+
+    :return: The best method based on estimated bin quality.
+    """
+    markers = Markers()
+
+    # bin_dirs = get_bin_dirs(bin_dirs_file)
+    filenames = os.listdir(res_path)
+    namelist = []
+    for filename in filenames:
+        if filename.endswith('.tsv'):
+            if ignore_kmeans_res:
+                if not filename.startswith('weight'):
+                    namelist.append(filename)
+            else:
+                namelist.append(filename)
+
+    namelist.sort()
+
+    bin_dirs = {}
+    for res in namelist:
+        bin_dirs[res] =  (res_path + res)
+
+    bins, contigs = read_bins_nosequences(bin_dirs)
+
+    methods_sorted = sorted(bins.keys())
+    orig_bins = copy.deepcopy(bins)
+
+    gene_table = markers.marker_gene_tables_pltd(pltd_mg_table)
+
+    bin_quality_dict, best_method = get_bin_quality(orig_bins, methods_sorted, markers)
+
+    output_file = res_path + 'estimate_res.txt'
+    write_estimated_bin_quality(bin_quality_dict, output_file)
+    
+    return best_method
+
 
 def run_get_final_result(logger, args, seed_num: int, num_threads: int = 40,
                          res_name: Optional[str] = None, ignore_kmeans_res: bool = True):
@@ -224,13 +267,15 @@ def run_get_final_result(logger, args, seed_num: int, num_threads: int = 40,
             profile.run_pltd(bin_dirs,
                         output_dir)
 
-        bac_mg_table = output_dir + '/binning_methods/' + res_name + '/checkm_bac/marker_gene_table.tsv'
-        ar_mg_table = output_dir + '/binning_methods/' + res_name + '/checkm_ar/marker_gene_table.tsv'
+        # bac_mg_table = output_dir + '/binning_methods/' + res_name + '/checkm_bac/marker_gene_table.tsv'
+        # ar_mg_table = output_dir + '/binning_methods/' + res_name + '/checkm_ar/marker_gene_table.tsv'
+        pltd_mg_table = output_dir + '/binning_methods/' + res_name + '/checkm_pltd/marker_gene_table.tsv'
     else:
-        bac_mg_table = args.bac_mg_table
-        ar_mg_table = args.ar_mg_table
+        # bac_mg_table = args.bac_mg_table
+        # ar_mg_table = args.ar_mg_table
+        pltd_mg_table = args.pltd_mg_table
 
-    best_method = estimate_bins_quality_nobins(bac_mg_table, ar_mg_table, args.output_path + '/cluster_res/',ignore_kmeans_res=ignore_kmeans_res)
+    best_method = estimate_bins_quality_nobins_pltd(pltd_mg_table, args.output_path + '/cluster_res/',ignore_kmeans_res=ignore_kmeans_res)
 
     logger.info('Final result:\t'+args.output_path + '/cluster_res/'+best_method)
     filter_small_bins(logger, args.contig_file, args.output_path + '/cluster_res/'+best_method, args)

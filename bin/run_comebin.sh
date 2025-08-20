@@ -25,15 +25,16 @@ help_message () {
   echo "  -d STR          path to the CheckM database (default=/home/yuhtong/scratch/andy/COMEBin_ChloroScan/checkm_database)"
 	echo "";}
 
-run_file_path=$(dirname $(which run_comebin.sh))
+# run_file_path=$(dirname $(which run_comebin.sh))
 
-if [[ $? -ne 0 ]]; then
-	echo "cannot find run_comebin.sh file - using developing mode directory instead."
-  run_file_path=/home/yuhtong/scratch/andy/COMEBin_ChloroScan
-	# exit 1
-fi
+# if [[ $? -ne 0 ]]; then
+# 	echo "cannot find run_comebin.sh file - using developing mode directory instead."
+#   run_file_path=/data/COMEBin_ChloroScan
+#   echo "run_file_path: ${run_file_path}"
+# 	# exit 1
+# fi
 
-
+run_file_path=/data/COMEBin_ChloroScan
 ########################################################################################################
 ########################     LOADING IN THE PARAMETERS AND RUNNING              ########################
 ########################################################################################################

@@ -113,6 +113,7 @@ class Markers():
         # bac_gene_table = defaultdict(list)
         # ar_gene_table = defaultdict(list)
         pltd_gene_table = defaultdict(list)
+        # breakpoint()
         for cid in bin:
             # for marker_id in self.bac_markers_on_contigs[cid]:
             #     bac_gene_table[marker_id].append(cid)
@@ -165,8 +166,7 @@ class Markers():
     def _markers_on_plastid_contigs(self, gene_table):
         """Get markers on each contig."""
 
-        self.bac_markers_on_contigs = defaultdict(list)
-        self.ar_markers_on_contigs = defaultdict(list)
+        self.pltd_markers_on_contigs = defaultdict(list)
         processed_contigs = set()
         pltd_gene_table = gene_table
         scaffolds_in_binning_method = set()

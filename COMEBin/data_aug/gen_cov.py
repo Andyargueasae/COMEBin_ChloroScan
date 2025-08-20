@@ -240,6 +240,7 @@ def gen_cov_from_bedout(logger, out_path: str, depth_file_path: str, contig_ids:
     ##generate coverage for original data
     for i in range(len(namelist)):
         depth_file = depth_file_path + namelist[i]
+        modify_depth_file(depth_file, contig_ids)
         pool.apply_async(
             calculate_coverage,
             args=(depth_file, logger, edge, contig_len),

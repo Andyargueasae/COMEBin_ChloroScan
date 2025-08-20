@@ -48,6 +48,21 @@ class Profile():
 
         self.cpus = cpus
 
+    def _genome_quality_pltd(self, pltd_quality_table):
+        """Get CheckM estimates for each genome in plastid."""
+
+        pltd = {}
+        with open(pltd_quality_table) as f:
+            f.readline()
+            for line in f:
+                line_split = line.strip().split('\t')
+                gid = line_split[0]
+                comp = float(line_split[5])
+                cont = float(line_split[6])
+                pltd[gid] = ("plastid", comp, cont)
+
+        return pltd
+
     def _genome_quality(self, bac_quality_table, ar_quality_table):
         """Get CheckM estimates for each genome."""
 
@@ -285,7 +300,7 @@ class Profile():
                 self.logger.error('Please verify there were bins in the bin directory specified for this method.')
                 sys.exit()
 
-            genome_quality[method_id] = self._genome_quality(pltd_quality_table)
+            genome_quality[method_id] = self._genome_quality_pltd(pltd_quality_table)
 
         self._report_genome_quality(genome_quality, output_dir)
 
